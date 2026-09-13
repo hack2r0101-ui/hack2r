@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<title>연금복권720+ 번호 생성기</title>
+<style>
+:root{--bg:#f5f6fa;--card:#fff;--text:#172033;--muted:#687386;--line:#e3e6ee;--blue:#315efb;--blue2:#eaf0ff}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Apple SD Gothic Neo","Noto Sans KR",sans-serif}
+main{max-width:560px;margin:auto;padding:18px 15px calc(40px + env(safe-area-inset-bottom))}
+h1{font-size:25px;margin:8px 0 5px}.sub{font-size:13px;color:var(--muted);margin-bottom:16px}
+.card{background:var(--card);border-radius:20px;padding:18px;margin:12px 0;box-shadow:0 4px 18px rgba(25,35,60,.06)}
+h2{font-size:17px;margin:0 0 13px}
+button,select,input,textarea{font:inherit}
+button{border:0;border-radius:13px;padding:13px 14px;font-weight:800}
+.primary{width:100%;background:var(--blue);color:white;font-size:17px;padding:16px}
+.row{display:flex;gap:8px;margin-top:9px}.row>*{flex:1}
+.secondary{background:var(--blue2);color:#2349b5}
+select,input,textarea{width:100%;border:1px solid var(--line);border-radius:12px;padding:12px;background:#fff;color:var(--text)}
+label{display:block;font-size:13px;font-weight:800;margin:0 0 7px}
+.nums{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px}
+.num{background:#f7f8fc;border:1px solid #edf0f6;border-radius:14px;padding:15px;text-align:center;font-size:24px;font-weight:900;letter-spacing:3px}
+.num button{display:block;width:100%;margin-top:8px;padding:8px;background:white;border:1px solid var(--line);font-size:12px}
+.hotbox{background:#f7f9ff;border:1px solid #dce5ff;border-radius:16px;padding:16px;text-align:center}
+.hot{font-size:31px;font-weight:950;letter-spacing:5px;margin:5px 0 10px}
+.badges{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}.badge{background:white;border-radius:10px;padding:8px 4px;font-size:12px}
+.badge b{font-size:17px}
+.status{font-size:12px;color:var(--muted);line-height:1.5;margin-top:9px}
+.table{width:100%;border-collapse:collapse;font-size:13px}.table th,.table td{padding:8px 4px;border-bottom:1px solid var(--line);text-align:center}.table th{color:var(--muted)}
+.note{font-size:11px;color:#8992a2;line-height:1.5;margin-top:13px}
+textarea{min-height:100px;resize:vertical}
+.hidden{display:none}
+</style>
+</head>
+<body>
+<main>
+  <h1>🎟️ 연금복권720+ 번호 생성기</h1>
+  <div class="sub">아이폰 사파리에서 바로 실행되는 단일 웹페이지 · 인터넷 없이도 생성 가능</div>
+
+  <section class="card">
+    <h2>번호 생성</h2>
+    <label for="qty">생성할 번호</label>
+    <select id="qty">
+      <option value="1">1개</option><option value="3">3개</option>
+      <option value="5" selected>5개</option><option value="10">10개</option>
+    </select>
+    <div style="height:10px"></div>
+    <button class="primary" id="gen">🎲 랜덤 번호 생성</button>
+    <div class="row">
+      <button class="secondary" id="hotBtn">⭐ 최빈 조합 생성</button>
+      <button class="secondary" id="copyBtn">📋 전체 복사</button>
+    </div>
+    <div id="results" class="nums"></div>
+  </section>
+
+  <section class="card">
+    <h2>⭐ 자리별 최빈 숫자</h2>
+    <div class="hotbox">
+      <div class="hot" id="hotNumber">계산 중</div>
+      <div class="badges" id="stats"></div>
+    </div>
+    <div class="status" id="dataStatus"></div>
+  </section>
+
+  <section class="card">
+    <h2>🔎 내 번호 분석</h2>
+    <label for="mine">6자리 번호</label>
+    <input id="mine" inputmode="numeric" maxlength="6" placeholder="예: 498765">
+    <div class="row"><button class="secondary" id="analyze">자리별 비교</button><button class="secondary" id="copyMine">번호 복사</button></div>
+    <div class="status" id="analysis"></div>
+  </section>
+
+  <section class="card">
+    <h2>📊 데이터 입력/업데이트</h2>
+    <div class="status" style="margin:0 0 8px">역대 1등 6자리 번호를 한 줄에 하나씩 붙여 넣으면 즉시 다시 계산합니다. 조는 제외하고 6자리 숫자만 넣으세요.</div>
+    <textarea id="dataset" placeholder="예:
+123456
+498765
+..."></textarea>
+    <div class="row"><button class="secondary" id="apply">데이터로 재계산</button><button class="secondary" id="restore">기본 데이터 복원</button></div>
+  </section>
+
+  <div class="note">※ 이 도구는 통계 기반의 참고용 번호 생성기입니다. 과거 출현 빈도가 미래 당첨확률을 높인다는 보장은 없습니다. 연금복권720+의 실제 1등 번호는 조+6자리 구조입니다.</div>
+</main>
+
+<script>
+/*
+  정적 웹페이지라서 외부 API/CORS에 의존하지 않습니다.
+  기본 데이터는 예시 데이터입니다.
+  사용자가 공식 동행복권의 역대 1등 번호를 붙여 넣으면 전체 통계를 다시 계산합니다.
+*/
+const DEFAULT_DATA = [
+"698740","439582","125905","642752","644513","221540","502733","011391",
+"485216","604270","119392","686709","766487","201327","401384","827917",
+"331818","537530","060727","726493","498765","729300","583214","910482",
+"274601","345987","806512","157430","632841","420975","781263","093518"
+];
+
+let data=[...DEFAULT_DATA];
+let hotDigits=[];
+let counts=[];
+
+const $=id=>document.getElementById(id);
+
+function normalize(lines){
+  return [...new Set(lines.split(/\s+/).map(x=>x.replace(/\D/g,"")).filter(x=>x.length===6))];
+}
+
+function calculate(){
+  counts=Array.from({length:6},()=>Array(10).fill(0));
+  data.forEach(n=>[...n].forEach((d,i)=>counts[i][+d]++));
+  hotDigits=counts.map(c=>{
+    const max=Math.max(...c);
+    return c.indexOf(max);
+  });
+  $("hotNumber").textContent=hotDigits.join("");
+  $("stats").innerHTML=hotDigits.map((d,i)=>`
+    <div class="badge">${i+1}자리<br><b>${d}</b><br>${counts[i][d]}회</div>`).join("");
+  $("dataStatus").textContent=`현재 분석 데이터: ${data.length}개 · 각 자리에서 가장 많이 나온 숫자를 조합했습니다.`;
+}
+
+function makeRandom(){
+  let s="";
+  for(let i=0;i<6;i++) s+=Math.floor(Math.random()*10);
+  return s;
+}
+
+function addNumber(n){
+  const wrap=document.createElement("div");
+  wrap.className="num";
+  wrap.innerHTML=`<div>${n}</div><button>번호 복사</button>`;
+  wrap.querySelector("button").onclick=()=>copyText(n);
+  $("results").appendChild(wrap);
+}
+
+function generate(){
+  $("results").innerHTML="";
+  const qty=Number($("qty").value);
+  const set=new Set();
+  while(set.size<qty) set.add(makeRandom());
+  set.forEach(addNumber);
+}
+
+function generateHot(){
+  $("results").innerHTML="";
+  addNumber(hotDigits.join(""));
+}
+
+function copyText(text){
+  if(navigator.clipboard && window.isSecureContext){
+    navigator.clipboard.writeText(text).then(()=>alert("복사했습니다.")).catch(()=>oldCopy(text));
+  }else oldCopy(text);
+}
+function oldCopy(text){
+  const t=document.createElement("textarea");t.value=text;document.body.appendChild(t);
+  t.select();try{document.execCommand("copy");alert("복사했습니다.");}catch(e){alert(text)}
+  t.remove();
+}
+
+function analyze(){
+  const n=$("mine").value.replace(/\D/g,"").slice(0,6);
+  if(n.length!==6){$("analysis").textContent="6자리 숫자를 입력하세요.";return}
+  const parts=[...n].map((d,i)=>{
+    const same=Number(d)===hotDigits[i];
+    return `${i+1}자리: ${d} ${same?"✓ 최빈":"· 최빈 "+hotDigits[i]}`;
+  });
+  $("analysis").innerHTML=parts.join("<br>")+"<br><br><b>일치: "+[...n].filter((d,i)=>Number(d)===hotDigits[i]).length+"/6자리</b>";
+}
+
+$("gen").onclick=generate;
+$("hotBtn").onclick=generateHot;
+$("copyBtn").onclick=()=>{
+  const nums=[...$("results").querySelectorAll(".num>div")].map(x=>x.textContent);
+  if(nums.length) copyText(nums.join("\n")); else alert("먼저 번호를 생성하세요.");
+};
+$("analyze").onclick=analyze;
+$("copyMine").onclick=()=>{
+  const n=$("mine").value.replace(/\D/g,"").slice(0,6);
+  if(n.length===6) copyText(n); else alert("6자리 숫자를 입력하세요.");
+};
+$("apply").onclick=()=>{
+  const parsed=normalize($("dataset").value);
+  if(parsed.length<1){alert("6자리 번호를 한 개 이상 입력하세요.");return}
+  data=parsed;calculate();alert(`${data.length}개 번호로 다시 계산했습니다.`);
+};
+$("restore").onclick=()=>{
+  data=[...DEFAULT_DATA];$("dataset").value="";calculate();alert("기본 데이터로 복원했습니다.");
+};
+
+calculate();
+generate();
+</script>
+</body>
+</html>
